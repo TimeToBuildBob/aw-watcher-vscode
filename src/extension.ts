@@ -103,6 +103,17 @@ class ActivityWatch {
             return;
         }
 
+        // A webview tab, Settings UI, diff of a deleted file, or agent chat panel
+        // leaves activeTextEditor undefined. Returning here rather than sending
+        // `unknown` preserves the preceding editor event: aw-server extends an open
+        // event only while the incoming heartbeat's data is identical, so one
+        // `unknown` between two heartbeats for the same file ends that event and
+        // opens a new one — both at duration 0. Letting the event lapse on its own
+        // costs nothing; pulsetime closes it anyway. See issue #57.
+        if (!window.activeTextEditor) {
+            return;
+        }
+
         // Create and send heartbeat
         try {
             const heartbeat = this._createHeartbeat();
